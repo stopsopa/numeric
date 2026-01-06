@@ -79,6 +79,8 @@ An Electron-based application to train numerical keyboard entry speed and accura
   - **Return Button:** Back to Start Screen. - keep button somewhere above the leaderboard table. In fact don't put anything under leaderboard table
 - for colums represented by abbreviations like "GS" or "G/L" add tooltip on hover to explain what it means
 
+- add also column date to leaderboard table - with the seconds - that column should be sortable. just present it and that's it
+
 ## 3. Configuration & Data Storage
 
 ### Global Config Object
