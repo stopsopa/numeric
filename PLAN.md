@@ -18,7 +18,8 @@ An Electron-based application to train numerical keyboard entry speed and accura
   - **Total Lines:** Number of lines for the session.
   - **Font Size:** Adjustable font size for task numbers.
   - **Font Family:** Choice from a curated list of easy-to-read fonts.
-  - **Sound Selection:** Dropdown of available sounds (loaded from `/sounds/list.json`). Provide button to play sound to preview it.
+  - **Font Preview:** Below the font selection, display a demo area (3 blocks of numbers) that updates in real-time as font size or family changes.
+  - **Sound Selection:** Dropdown of available sounds (loaded from `/sounds/list.json`). Create multiple distinct sound options (names and acoustic profiles). Provide button to play sound to preview it.
 - **Actions:**
   - **Start Button:** Begins the session and switches to Work Screen.
   - **Leaderboard Button:** Navigates to the Leaderboard screen.
@@ -55,11 +56,28 @@ An Electron-based application to train numerical keyboard entry speed and accura
 
 ### 4) Leaderboard Screen
 
-- **Display:**
-  - List of entries with User Name, Accuracy, Time, and Error Count.
-  - **Sorting:** Ability to sort by any of the metric columns.
+- **Display Table Columns:**
+  - **User:** Username.
+  - **Accuracy:** Success rate.
+  - **Time:** Duration.
+  - **Errors:** Total mistakes.
+  - **GS:** Group Size.
+  - **G/L:** Groups per Line.
+  - **Lines:** Total Lines.
+  - **Mode:** Error handling mode.
+- **Advanced Multi-Column Sorting (Three-Level Filter):**
+  - **Primary Sort:** Clicking a column head for the first time sets it as the primary sort (Descending). Clicking the same column again toggles to Ascending.
+  - **Secondary/Tertiary Sort:** While a primary sort is active, clicking another column adds it as a secondary sort level (sorting within the groups created by the primary sort). Clicking a third column adds it as a tertiary level.
+  - **Visual Feedback (Color Coding):**
+    - **Dark Gray background:** Primary column.
+    - **Medium Gray background:** Secondary column.
+    - **Light Gray background:** Tertiary column.
+  - **Direction Indicators:** Use `▲` and `▼` icons next to column headers to show current direction.
+  - **Legend:** A legend above the table describing what the background colors and icons mean.
+  - **Reset Sorting Button:** A button to clear all active sorting criteria and return to default state.
 - **Action:**
-  - **Return Button:** Back to Start Screen.
+  - **Return Button:** Back to Start Screen. - keep button somewhere above the leaderboard table. In fact don't put anything under leaderboard table
+- for colums represented by abbreviations like "GS" or "G/L" add tooltip on hover to explain what it means
 
 ## 3. Configuration & Data Storage
 
@@ -117,9 +135,10 @@ const CONFIG = {
 - No mobile or small-screen responsiveness required.
 
 # DEV requirements
+
 Create DEV.md describing in most compact way what command one should use to create electron build for this app, in order to test it locally
 
 # Releasing:
 
 WARNING: this has to be done
-I've prepared .github/* setup also setup for electron - try to follow and adapt to it
+I've prepared .github/\* setup also setup for electron - try to follow and adapt to it
