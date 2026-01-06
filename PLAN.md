@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-An Express-based web application to train numerical keyboard entry speed and accuracy.
+An Electron-based application to train numerical keyboard entry speed and accuracy.
 
 ## 2. Core Screens
 
@@ -10,18 +10,21 @@ An Express-based web application to train numerical keyboard entry speed and acc
 
 - **User Identification:**
   - Dropdown to select existing username from Leaderboard.
-  - Text field to enter a new name.
+  - Text field to enter a new name. (hide this field if value other than empty selected in dropdown). make sure to keep it empty when in dropdown empty (default) value selected
 - **Session Settings (Dropdowns/Toggles):**
   - **Error Handling Mode:** `Carry on` (default) vs. `Leave empty`.
   - **Group Size:** Number of digits per group (e.g., 3, 4, 5).
   - **Groups per Line:** Number of groups displayed per line.
   - **Total Lines:** Number of lines for the session.
   - **Font Size:** Adjustable font size for task numbers.
-  - **Font Family:** Choice from a curated list of easy-to-read fonts.
-  - **Sound Selection:** Dropdown of available sounds (loaded from `/sounds/list.json`).
+  - **Font Family:** Choice from a curated list of easy-to-read fonts. (introduce at least 10 fonts in the dropdown)
+  - **Font Preview:** Below the font selection, display a demo area (3 blocks of numbers) that updates in real-time as font size or family changes.
+  - **Sound Selection:** Dropdown of available sounds (loaded from `/sounds/list.json`). Create multiple distinct sound options (names and acoustic profiles). Provide button to play sound to preview it. Make sure sound really works. look for reliable solution to play mp3.
+    Bring physical mp3 files to folder /sounds/
 - **Actions:**
   - **Start Button:** Begins the session and switches to Work Screen.
   - **Leaderboard Button:** Navigates to the Leaderboard screen.
+- add some decent UI to this screen
 
 ### 2) Work Screen
 
@@ -32,10 +35,14 @@ An Express-based web application to train numerical keyboard entry speed and acc
 - **Interactions:**
   - User types numbers matching the task above.
   - **'x' Button:** Located in the corner to abandon run. Prompts for confirmation before returning to Start Screen.
+  - don't use alert() function - create custom modal with yes and no buttons
 - **Error Handling:**
   - **Carry on Mode:** Error sound plays, input field stays empty until correct key is hit.
   - **Leave empty Mode:** Error sound plays, field marked as error, focus moves to next field immediately.
 - **Completion:** Auto-switches to Summary Screen once all lines are filled.
+- make sure to align all boxes which user filles in right under the original numbers to copy (maybe introduce some kind of grid system in the layout to make sure about that), but make grid discreet don't render borders for each cell and so on, just implement carret to show where cursor is
+- remember that user copies what user sees. make sure that user once type 5 first digits cursor moves to next group and next number entered fills in next box in that next group - and like that until the end of the entire excercise
+- typieg last digit in all work screen should automatically move to summary screen and execute it's logic
 
 ### 3) Summary Screen
 
@@ -51,11 +58,31 @@ An Express-based web application to train numerical keyboard entry speed and acc
 
 ### 4) Leaderboard Screen
 
-- **Display:**
-  - List of entries with User Name, Accuracy, Time, and Error Count.
-  - **Sorting:** Ability to sort by any of the metric columns.
+- **Display Table Columns:**
+  - **User:** Username.
+  - **Accuracy:** Success rate.
+  - **Time:** Duration.
+  - **Errors:** Total mistakes.
+  - **GS:** Group Size.
+  - **G/L:** Groups per Line.
+  - **Lines:** Total Lines.
+  - **Mode:** Error handling mode.
+- **Advanced Multi-Column Sorting (Three-Level Filter):**
+  - **Primary Sort:** Clicking a column head for the first time sets it as the primary sort (Descending). Clicking the same column again toggles to Ascending.
+  - **Secondary/Tertiary Sort:** While a primary sort is active, clicking another column adds it as a secondary sort level (sorting within the groups created by the primary sort). This supports up to **7 levels** of nested sorting.
+  - Since we have 7 levels of sorting maybe just on relying on different shades of gray , let's use different background pattern, maybe small digits with that number grayish barely but still visible. build legend for each of them too separately.
+  - **Visual Feedback (Color Coding pre-defined for all 7 levels):**
+    - **Dark Gray background:** Primary column.
+    - **Medium Gray background:** Secondary column.
+    - **Light Gray background:** Tertiary column.
+  - **Direction Indicators:** Use `▲` and `▼` icons next to column headers to show current direction.
+  - **Legend:** A legend above the table describing what the background colors and icons mean.
+  - **Reset Sorting Button:** A button to clear all active sorting criteria and return to default state.
 - **Action:**
-  - **Return Button:** Back to Start Screen.
+  - **Return Button:** Back to Start Screen. - keep button somewhere above the leaderboard table. In fact don't put anything under leaderboard table
+- for colums represented by abbreviations like "GS" or "G/L" add tooltip on hover to explain what it means
+
+- add also column date to leaderboard table - with the seconds - that column shouldn't be sortable. just present it and that's it. Format Y-MM-DD HH:mm:ss
 
 ## 3. Configuration & Data Storage
 
@@ -83,22 +110,43 @@ const CONFIG = {
 };
 ```
 
+# back button
+
+Button for going back to start screen should be always in top right corner and looks the same
+Ideally i would like it to be the same component but with extra step with modal only when pressed from work screen
+
 ### File System Storage (Paths)
 
 - **Settings:** `~/numeric/settings.json` (Last selected sound, font, etc.)
 - **Current User:** `~/numeric/current_user.json` (Last used username)
 - **Leaderboard:** `~/numeric/leaderboard.json` (All session records)
 
+#### leaderboard.json format
+
+```json
+[
+    {
+      "name": "Simon",
+      "accuracy": 96,
+      "time": 15.578,
+      "errors": 1,
+      "totalKeys": 25,
+      "date": "2026-01-06T23:53:31.199Z",
+      "settings": {
+        "groupSize": 3,
+        "groupsPerLine": 4,
+        "totalLines": 2
+      }
+    },
+    ...
+]
+```
+
 ## 4. Technical Details
-
-### Backend (Express.js)
-
-- Server to handle file I/O for leaderboard and settings.
-- Serve static files (HTML, CSS, JS, Sounds).
-- API endpoints for saving/loading data from `~/numeric/`.
 
 ### Frontend (Vanilla CSS & JS)
 
+- entire electron app hold in /electron folder of this git repository
 - Single Page Application (SPA) structure using hidden/visible sections or dynamic rendering.
 - **No Dark Mode.** Focus on high-contrast, readable UI. (mainly variatons of gray colors)
 - **Micro-animations:** No animation - fast reaction of UI prioritized
@@ -117,8 +165,21 @@ const CONFIG = {
 - Optimized for Mac Desktop environment.
 - No mobile or small-screen responsiveness required.
 
+# DEV requirements
+
+Create DEV.md describing in most compact way what command one should use to create electron build for this app, in order to test it locally
+
 # Releasing:
 
-Follow instructions from: https://github.com/stopsopa/musicfilter/blob/main/electron/SHIP.md
-Prepare installation instruction similar to : https://github.com/stopsopa/musicfilter/tree/main/electron
-Use Github Actions style from: https://github.com/stopsopa/musicfilter/tree/main/.github/workflows
+WARNING: this has to be done
+I've prepared .github/\* setup also setup for electron - try to follow and adapt to it
+
+# Tweak
+
+I don't understand the concept of
+
+Filtered Leaderboard
+
+Show All Settings
+
+just always show all records - allow me though to filter in advanced way as described above
