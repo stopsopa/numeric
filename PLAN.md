@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-An Express-based web application to train numerical keyboard entry speed and accuracy.
+An Electron-based application to train numerical keyboard entry speed and accuracy.
 
 ## 2. Core Screens
 
@@ -18,7 +18,7 @@ An Express-based web application to train numerical keyboard entry speed and acc
   - **Total Lines:** Number of lines for the session.
   - **Font Size:** Adjustable font size for task numbers.
   - **Font Family:** Choice from a curated list of easy-to-read fonts.
-  - **Sound Selection:** Dropdown of available sounds (loaded from `/sounds/list.json`).
+  - **Sound Selection:** Dropdown of available sounds (loaded from `/sounds/list.json`). Provide button to play sound to preview it.
 - **Actions:**
   - **Start Button:** Begins the session and switches to Work Screen.
   - **Leaderboard Button:** Navigates to the Leaderboard screen.
@@ -32,10 +32,14 @@ An Express-based web application to train numerical keyboard entry speed and acc
 - **Interactions:**
   - User types numbers matching the task above.
   - **'x' Button:** Located in the corner to abandon run. Prompts for confirmation before returning to Start Screen.
+  - don't use alert() function - create custom modal with yes and no buttons
 - **Error Handling:**
   - **Carry on Mode:** Error sound plays, input field stays empty until correct key is hit.
   - **Leave empty Mode:** Error sound plays, field marked as error, focus moves to next field immediately.
 - **Completion:** Auto-switches to Summary Screen once all lines are filled.
+- make sure to align all boxes which user filles in right under the original numbers to copy
+- remember that user copies what user sees. make sure that user once type 5 first digits cursor moves to next group and next number entered fills in next box in that next group - and like that until the end of the entire excercise
+- typieg last digit in all work screen should automatically move to summary screen and execute it's logic
 
 ### 3) Summary Screen
 
@@ -91,14 +95,9 @@ const CONFIG = {
 
 ## 4. Technical Details
 
-### Backend (Express.js)
-
-- Server to handle file I/O for leaderboard and settings.
-- Serve static files (HTML, CSS, JS, Sounds).
-- API endpoints for saving/loading data from `~/numeric/`.
-
 ### Frontend (Vanilla CSS & JS)
 
+- entire electron app hold in /electron folder of this git repository
 - Single Page Application (SPA) structure using hidden/visible sections or dynamic rendering.
 - **No Dark Mode.** Focus on high-contrast, readable UI. (mainly variatons of gray colors)
 - **Micro-animations:** No animation - fast reaction of UI prioritized
@@ -117,8 +116,10 @@ const CONFIG = {
 - Optimized for Mac Desktop environment.
 - No mobile or small-screen responsiveness required.
 
+# DEV requirements
+Create DEV.md describing in most compact way what command one should use to create electron build for this app, in order to test it locally
+
 # Releasing:
 
-Follow instructions from: https://github.com/stopsopa/musicfilter/blob/main/electron/SHIP.md
-Prepare installation instruction similar to : https://github.com/stopsopa/musicfilter/tree/main/electron
-Use Github Actions style from: https://github.com/stopsopa/musicfilter/tree/main/.github/workflows
+WARNING: this has to be done
+I've prepared .github/* setup also setup for electron - try to follow and adapt to it
