@@ -153,6 +153,14 @@ function initStartScreen() {
         ${CONFIG.fonts.map(f => `<option value="${f}" ${userState.settings.fontFamily === f ? 'selected' : ''}>${f}</option>`).join('')}
       </select>
     </div>
+    <div class="setting-item full-width">
+      <label>Font Preview:</label>
+      <div id="font-preview" class="font-preview-demo">
+        <div class="task-group">123</div>
+        <div class="task-group">456</div>
+        <div class="task-group">789</div>
+      </div>
+    </div>
     <div class="setting-item">
       <label>Sound Select:</label>
       <div class="sound-select-row">
@@ -168,6 +176,26 @@ function initStartScreen() {
     userState.settings.soundFile = document.getElementById('select-soundFile').value;
     playErrorSound();
   };
+
+  // Add listeners for font preview
+  ['input-fontSize', 'select-fontFamily'].forEach(id => {
+    document.getElementById(id).addEventListener('change', updateFontPreview);
+  });
+  updateFontPreview();
+}
+
+function updateFontPreview() {
+  const preview = document.getElementById('font-preview');
+  if (!preview) return;
+  const size = document.getElementById('input-fontSize').value;
+  const family = document.getElementById('select-fontFamily').value;
+  preview.style.fontSize = `${size}px`;
+  preview.style.fontFamily = family;
+  preview.innerHTML = `
+    <div class="task-group">123</div>
+    <div class="task-group">456</div>
+    <div class="task-group">789</div>
+  `;
 }
 
 async function startSession() {
@@ -406,6 +434,7 @@ async function finishSession() {
     errors: sessionData.errors,
     totalKeys: sessionData.totalKeypresses,
     date: new Date().toISOString(),
+    settings: { ...userState.settings }, // Save settings for filtering
   };
 
   leaderboard.push(record);
@@ -440,6 +469,8 @@ function initSummaryScreen(record) {
   }
 }
 
+let activeSorts = []; // Array of { column, direction: 'asc'|'desc' }
+
 function renderLeaderboard() {
   const container = document.getElementById('leaderboard-table-container');
   if (leaderboard.length === 0) {
@@ -447,29 +478,138 @@ function renderLeaderboard() {
     return;
   }
 
-  // Sort by accuracy desc, then time asc
-  const sorted = [...leaderboard].sort((a, b) => b.accuracy - a.accuracy || a.time - b.time);
+  activeSorts = []; // Clear on fresh entry if needed, or keep? 
+  // User asked for reset, let's keep it until reset is clicked.
+  renderLeaderboardContent();
+}
+
+function handleSortClick(column) {
+  const existingIdx = activeSorts.findIndex(s => s.column === column);
+  
+  if (existingIdx === 0) {
+    // Primary exists, toggle direction
+    activeSorts[0].direction = activeSorts[0].direction === 'desc' ? 'asc' : 'desc';
+  } else if (existingIdx > 0) {
+    // Secondary/Tertiary exists, move to primary or just toggle?
+    // Let's toggle direction if clicked again
+    activeSorts[existingIdx].direction = activeSorts[existingIdx].direction === 'desc' ? 'asc' : 'desc';
+  } else {
+    // New sort level
+    if (activeSorts.length < 3) {
+      activeSorts.push({ column, direction: 'desc' });
+    } else {
+      // Replace last if already 3? Or just do nothing.
+      alert('Maximum 3 levels of sorting allowed.');
+    }
+  }
+  renderLeaderboardContent(document.getElementById('leaderboard-table-container').dataset.showAll === 'true');
+}
+
+function renderLeaderboardContent(showAll = false) {
+  const container = document.getElementById('leaderboard-table-container');
+  container.dataset.showAll = showAll;
+  const s = userState.settings;
+  
+  let list = leaderboard.map(r => ({
+    ...r,
+    groupSize: r.settings?.groupSize || 0,
+    groupsPerLine: r.settings?.groupsPerLine || 0,
+    totalLines: r.settings?.totalLines || 0,
+    errorMode: r.settings?.errorMode || 'N/A'
+  }));
+
+  if (!showAll) {
+    list = list.filter(r => 
+      r.settings && 
+      r.settings.groupSize === s.groupSize &&
+      r.settings.groupsPerLine === s.groupsPerLine &&
+      r.settings.totalLines === s.totalLines &&
+      r.settings.errorMode === s.errorMode
+    );
+  }
+
+  // Multi-column sorting logic
+  const sorted = [...list].sort((a, b) => {
+    for (const sort of activeSorts) {
+      const valA = a[sort.column];
+      const valB = b[sort.column];
+      
+      if (valA === valB) continue;
+      
+      const comparison = typeof valA === 'string' 
+        ? valA.localeCompare(valB) 
+        : valA - valB;
+        
+      return sort.direction === 'desc' ? -comparison : comparison;
+    }
+    // Default fallback sort by date
+    return new Date(b.date) - new Date(a.date);
+  });
+
+  const getSortClass = (col) => {
+    const idx = activeSorts.findIndex(s => s.column === col);
+    if (idx === 0) return 'sort-p';
+    if (idx === 1) return 'sort-s';
+    if (idx === 2) return 'sort-t';
+    return '';
+  };
+
+  const getSortIndicator = (col) => {
+    const sort = activeSorts.find(s => s.column === col);
+    if (!sort) return '';
+    return `<span class="sort-indicator">${sort.direction === 'desc' ? '▼' : '▲'}</span>`;
+  };
 
   container.innerHTML = `
+    <div class="leaderboard-legend">
+      <div class="legend-item"><div class="color-box sort-p"></div> Primary</div>
+      <div class="legend-item"><div class="color-box sort-s"></div> Secondary</div>
+      <div class="legend-item"><div class="color-box sort-t"></div> Tertiary</div>
+      <div class="legend-item"><span>▼/▲ = Desc/Asc</span></div>
+      <button id="btn-reset-sort" class="btn-small">Reset Sort</button>
+    </div>
+    <div class="leaderboard-header">
+      <p><strong>${showAll ? 'Global Leaderboard' : 'Filtered Leaderboard'}</strong></p>
+      <button id="btn-toggle-leaderboard" class="btn-small">${showAll ? 'Show Matching Settings' : 'Show All Settings'}</button>
+    </div>
     <table class="leaderboard-table">
       <thead>
         <tr>
-          <th>User</th>
-          <th>Accuracy %</th>
-          <th>Time</th>
-          <th>Errors</th>
+          <th onclick="handleSortClick('name')" class="${getSortClass('name')}">User ${getSortIndicator('name')}</th>
+          <th onclick="handleSortClick('accuracy')" class="${getSortClass('accuracy')}">Acc % ${getSortIndicator('accuracy')}</th>
+          <th onclick="handleSortClick('time')" class="${getSortClass('time')}">Time ${getSortIndicator('time')}</th>
+          <th onclick="handleSortClick('errors')" class="${getSortClass('errors')}">Errors ${getSortIndicator('errors')}</th>
+          <th onclick="handleSortClick('groupSize')" class="${getSortClass('groupSize')}">GS ${getSortIndicator('groupSize')}</th>
+          <th onclick="handleSortClick('groupsPerLine')" class="${getSortClass('groupsPerLine')}">G/L ${getSortIndicator('groupsPerLine')}</th>
+          <th onclick="handleSortClick('totalLines')" class="${getSortClass('totalLines')}">Lines ${getSortIndicator('totalLines')}</th>
+          <th onclick="handleSortClick('errorMode')" class="${getSortClass('errorMode')}">Mode ${getSortIndicator('errorMode')}</th>
         </tr>
       </thead>
       <tbody>
         ${sorted.map(r => `
           <tr>
             <td>${r.name || r.username || 'Unknown'}</td>
-            <td>${r.accuracy}</td>
+            <td>${r.accuracy}%</td>
             <td>${Math.floor(r.time / 60)}m ${Math.floor(r.time % 60)}s</td>
             <td>${r.errors}</td>
+            <td>${r.groupSize}</td>
+            <td>${r.groupsPerLine}</td>
+            <td>${r.totalLines}</td>
+            <td><small>${r.errorMode}</small></td>
           </tr>
         `).join('')}
       </tbody>
     </table>
   `;
+
+  document.getElementById('btn-toggle-leaderboard').onclick = () => {
+    renderLeaderboardContent(!showAll);
+  };
+  document.getElementById('btn-reset-sort').onclick = () => {
+    activeSorts = [];
+    renderLeaderboardContent(showAll);
+  };
 }
+
+// Make globally accessible for onclick
+window.handleSortClick = handleSortClick;

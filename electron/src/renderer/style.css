@@ -162,12 +162,45 @@ button {
   border-bottom: 1px solid #ddd;
 }
 
-.sound-select-row {
+.font-preview-demo {
+  border: 2px dashed #ccc;
+  padding: 15px;
+  margin-top: 10px;
   display: flex;
-  gap: 10px;
+  gap: 20px;
+  justify-content: center;
+  background: #fff;
 }
 
-.btn-small {
-  padding: 5px 10px;
-  font-size: 14px;
+.setting-item.full-width {
+  grid-column: 1 / -1;
+}
+
+/* Sorting Visuals */
+.sort-p { background-color: #bbbbbb !important; } /* Primary - Darker */
+.sort-s { background-color: #dddddd !important; } /* Secondary - Medium */
+.sort-t { background-color: #eeeeee !important; } /* Tertiary - Lighter */
+
+.sort-indicator {
+  margin-left: 5px;
+  font-size: 0.8em;
+}
+
+.leaderboard-legend {
+  font-size: 12px;
+  margin-bottom: 10px;
+  display: flex;
+  gap: 15px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.color-box {
+  width: 12px;
+  height: 12px;
+  border: 1px solid #999;
 }
