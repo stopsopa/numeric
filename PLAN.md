@@ -40,9 +40,9 @@ An Express-based web application to train numerical keyboard entry speed and acc
 ### 3) Summary Screen
 
 - **Metrics Display:**
-  - **Accuracy:** (Total Correct / Total Digits) %.
-  - **Time Taken:** Total duration.
-  - **Error Count:** Total number of wrong key presses.
+  - **Error Count:** Total number of wrong key presses. / Total number of key presses
+  - **Accuracy:** next to above: (Total Correct / Total Digits) %.
+  - **Time Taken:** Total duration. human readable (minutes, seconds)
 - **Achievements:**
   - If a record is broken (highest accuracy, fastest time, etc.), show confetti animation and a "New Record!" splash screen.
 - **Actions:**
@@ -73,6 +73,7 @@ const CONFIG = {
     errorMode: "carry_on",
     fontFamily: "Roboto Mono",
   },
+  fonts: ["Roboto Mono", "....some other fonts...."],
   limits: {
     groupSize: { min: 1, max: 10 },
     groupsPerLine: { min: 1, max: 20 },
@@ -99,8 +100,8 @@ const CONFIG = {
 ### Frontend (Vanilla CSS & JS)
 
 - Single Page Application (SPA) structure using hidden/visible sections or dynamic rendering.
-- **No Dark Mode.** Focus on high-contrast, readable UI.
-- **Micro-animations:** Smooth transitions between screens.
+- **No Dark Mode.** Focus on high-contrast, readable UI. (mainly variatons of gray colors)
+- **Micro-animations:** No animation - fast reaction of UI prioritized
 - **Confetti:** Use a library like `canvas-confetti` for achievements.
 
 ### Sound Management
@@ -117,6 +118,7 @@ const CONFIG = {
 - No mobile or small-screen responsiveness required.
 
 # Releasing:
+
 Follow instructions from: https://github.com/stopsopa/musicfilter/blob/main/electron/SHIP.md
 Prepare installation instruction similar to : https://github.com/stopsopa/musicfilter/tree/main/electron
 Use Github Actions style from: https://github.com/stopsopa/musicfilter/tree/main/.github/workflows
