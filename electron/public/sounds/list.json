@@ -1,0 +1,7 @@
+[
+  { "file": "error.mp3", "name": "Classic Beep" },
+  { "file": "buzzer.mp3", "name": "Buzzer" },
+  { "file": "click.mp3", "name": "Mechanical Click" },
+  { "file": "wood.mp3", "name": "Wood Block" },
+  { "file": "digital.mp3", "name": "Digital Alert" }
+]
