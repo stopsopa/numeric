@@ -3,7 +3,7 @@
   "private": true,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/stopsopa/musicfilter.git"
+    "url": "git+https://github.com/stopsopa/numeric.git"
   },
   "version": "1.0.0",
   "type": "module",
