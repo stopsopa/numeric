@@ -25,7 +25,9 @@ Prepare the `numeric` Electron application for simple installation by end-users,
 1.  **Merge Changes**: Merge PRs to `main`. `release-drafter` will automatically update the draft release with new entries.
 2.  **Review**: Go to [Releases](../../releases). Edit the draft if needed (e.g., adjust version number sequence).
 3.  **Publish**: Click **Publish release**.
+
     - This creates the tag (e.g., `v1.0.0`).
+
     - Triggers the build workflow.
     - Uploads `numeric-*-universal.dmg` to the release.
 
