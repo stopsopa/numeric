@@ -1,35 +1,43 @@
-# DEV: Numerical Keyboard Trainer
+# Developer Guide: Numerical Keyboard Trainer
 
 ## Local Development
 
-To test the application locally:
-
-1.  **Install Dependencies:**
-
-    ```bash
-    npm install
-    ```
-
-2.  **Run in Development Mode:**
-    ```bash
-    npm run dev
-    ```
-    This will start the Vite dev server and then launch Electron, pointing it to the local server.
-
-## Building and Packaging
-
-To create a production build and package the application into a `.dmg` (macOS):
+To run the application in development mode:
 
 ```bash
-npm run build
-npx electron-builder
+# Install dependencies
+npm install
+
+# Start development server (Vite + Electron)
+npm run dev
 ```
 
-The output will be located in the `release/` directory.
+## Creating a Build
 
-## File System Locations
+To create a production build for Mac (DMG):
 
-- **Settings:** `~/numeric/settings.json`
-- **Current User:** `~/numeric/current_user.json`
-- **Leaderboard:** `~/numeric/leaderboard.json`
-- **Sounds:** `/public/sounds/` with registry in `list.json`
+```bash
+# Build the application
+npm run build
+
+# Package the application using electron-builder
+npx electron-builder build --mac
+```
+
+The output will be located in the `/release` directory.
+
+## Data Storage
+
+Settings and leaderboard data are stored in:
+`~/numeric/`
+
+- `settings.json`: App configuration.
+- `current_user.json`: Last used username.
+- `leaderboard.json`: Session records.
+
+## Sound Registry
+
+Sounds are managed in `public/sounds/list.json`. To add a new sound:
+
+1. Place the `.mp3` file in `public/sounds/`.
+2. Add its filename and a display name to `list.json`.

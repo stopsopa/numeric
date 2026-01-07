@@ -10,20 +10,21 @@ An Electron-based application to train numerical keyboard entry speed and accura
 
 - **User Identification:**
   - Dropdown to select existing username from Leaderboard.
-  - Text field to enter a new name.
+  - Text field to enter a new name. (hide this field if value other than empty selected in dropdown). make sure to keep it empty when in dropdown empty (default) value selected
 - **Session Settings (Dropdowns/Toggles):**
   - **Error Handling Mode:** `Carry on` (default) vs. `Leave empty`.
   - **Group Size:** Number of digits per group (e.g., 3, 4, 5).
   - **Groups per Line:** Number of groups displayed per line.
   - **Total Lines:** Number of lines for the session.
   - **Font Size:** Adjustable font size for task numbers.
-  - **Font Family:** Choice from a curated list of easy-to-read fonts.
+  - **Font Family:** Choice from a curated list of easy-to-read fonts. (introduce at least 10 fonts in the dropdown)
   - **Font Preview:** Below the font selection, display a demo area (3 blocks of numbers) that updates in real-time as font size or family changes.
-  - **Sound Selection:** Dropdown of available sounds (loaded from `/sounds/list.json`). Create multiple distinct sound options (names and acoustic profiles). Provide button to play sound to preview it.
-  Download from somewhere some interesting short sounds in the mp3 format and really use these sounds
+  - **Sound Selection:** Dropdown of available sounds (loaded from `/sounds/list.json`). Create multiple distinct sound options (names and acoustic profiles). Provide button to play sound to preview it. Make sure sound really works. look for reliable solution to play mp3.
+    Bring physical mp3 files to folder /sounds/
 - **Actions:**
   - **Start Button:** Begins the session and switches to Work Screen.
   - **Leaderboard Button:** Navigates to the Leaderboard screen.
+- add some decent UI to this screen
 
 ### 2) Work Screen
 
@@ -39,7 +40,7 @@ An Electron-based application to train numerical keyboard entry speed and accura
   - **Carry on Mode:** Error sound plays, input field stays empty until correct key is hit.
   - **Leave empty Mode:** Error sound plays, field marked as error, focus moves to next field immediately.
 - **Completion:** Auto-switches to Summary Screen once all lines are filled.
-- make sure to align all boxes which user filles in right under the original numbers to copy
+- make sure to align all boxes which user filles in right under the original numbers to copy (maybe introduce some kind of grid system in the layout to make sure about that), but make grid discreet don't render borders for each cell and so on, just implement carret to show where cursor is
 - remember that user copies what user sees. make sure that user once type 5 first digits cursor moves to next group and next number entered fills in next box in that next group - and like that until the end of the entire excercise
 - typieg last digit in all work screen should automatically move to summary screen and execute it's logic
 
@@ -69,7 +70,7 @@ An Electron-based application to train numerical keyboard entry speed and accura
 - **Advanced Multi-Column Sorting (Three-Level Filter):**
   - **Primary Sort:** Clicking a column head for the first time sets it as the primary sort (Descending). Clicking the same column again toggles to Ascending.
   - **Secondary/Tertiary Sort:** While a primary sort is active, clicking another column adds it as a secondary sort level (sorting within the groups created by the primary sort). This supports up to **7 levels** of nested sorting.
-  - Since we have 7 levels of sorting maybe just on relying on different shades of gray , let's use different background pattern, maybe small digits with that number grayish barely but still visible. build legend for each of them too.
+  - Since we have 7 levels of sorting maybe just on relying on different shades of gray , let's use different background pattern, maybe small digits with that number grayish barely but still visible. build legend for each of them too separately.
   - **Visual Feedback (Color Coding pre-defined for all 7 levels):**
     - **Dark Gray background:** Primary column.
     - **Medium Gray background:** Secondary column.
@@ -81,7 +82,7 @@ An Electron-based application to train numerical keyboard entry speed and accura
   - **Return Button:** Back to Start Screen. - keep button somewhere above the leaderboard table. In fact don't put anything under leaderboard table
 - for colums represented by abbreviations like "GS" or "G/L" add tooltip on hover to explain what it means
 
-- add also column date to leaderboard table - with the seconds - that column should be sortable. just present it and that's it. Format Y-MM-DD H-MM-SS
+- add also column date to leaderboard table - with the seconds - that column shouldn't be sortable. just present it and that's it. Format Y-MM-DD HH:mm:ss
 
 ## 3. Configuration & Data Storage
 
@@ -109,11 +110,37 @@ const CONFIG = {
 };
 ```
 
+# back button
+
+Button for going back to start screen should be always in top right corner and looks the same
+Ideally i would like it to be the same component but with extra step with modal only when pressed from work screen
+
 ### File System Storage (Paths)
 
 - **Settings:** `~/numeric/settings.json` (Last selected sound, font, etc.)
 - **Current User:** `~/numeric/current_user.json` (Last used username)
 - **Leaderboard:** `~/numeric/leaderboard.json` (All session records)
+
+#### leaderboard.json format
+
+```json
+[
+    {
+      "name": "Simon",
+      "accuracy": 96,
+      "time": 15.578,
+      "errors": 1,
+      "totalKeys": 25,
+      "date": "2026-01-06T23:53:31.199Z",
+      "settings": {
+        "groupSize": 3,
+        "groupsPerLine": 4,
+        "totalLines": 2
+      }
+    },
+    ...
+]
+```
 
 ## 4. Technical Details
 
@@ -146,3 +173,13 @@ Create DEV.md describing in most compact way what command one should use to crea
 
 WARNING: this has to be done
 I've prepared .github/\* setup also setup for electron - try to follow and adapt to it
+
+# Tweak
+
+I don't understand the concept of
+
+Filtered Leaderboard
+
+Show All Settings
+
+just always show all records - allow me though to filter in advanced way as described above
