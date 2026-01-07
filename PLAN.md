@@ -19,8 +19,7 @@ An Electron-based application to train numerical keyboard entry speed and accura
   - **Font Size:** Adjustable font size for task numbers.
   - **Font Family:** Choice from a curated list of easy-to-read fonts. (introduce at least 10 fonts in the dropdown)
   - **Font Preview:** Below the font selection, display a demo area (3 blocks of numbers) that updates in real-time as font size or family changes.
-  - **Sound Selection:** Dropdown of available sounds (loaded from `/sounds/list.json`). Create multiple distinct sound options (names and acoustic profiles). Provide button to play sound to preview it. Make sure sound really works. look for reliable solution to play mp3.
-    Bring physical mp3 files to folder /sounds/
+  - **Sound Selection:** Dropdown of available sounds generated programmatically using the Web Audio API. Provide multiple distinct sound options (warm beeps, "ee" pulses, etc.). Provide button to play sound to preview it.
 - **Actions:**
   - **Start Button:** Begins the session and switches to Work Screen.
   - **Leaderboard Button:** Navigates to the Leaderboard screen.
@@ -154,11 +153,9 @@ Ideally i would like it to be the same component but with extra step with modal 
 
 ### Sound Management
 
-- **Location:** `/public/sounds/`
-- **Registry:** `/public/sounds/list.json`
-  - Format: `[{"file": "beep.mp3", "name": "Classic Beep"}, ...]`
-  - First element is the default.
-- **Implementation:** Preload sounds using `AudioContext` or `HTML5 Audio` with low-latency techniques to ensure zero-delay playback on error.
+- **Implementation:** Sounds are generated programmatically in the renderer using the `Web Audio API`.
+- **Latency:** Ensures zero-delay playback on error by using an `AudioContext` and short, synthesized envelopes.
+- **Variety:** Includes several "warm" profiles like sine beeps, triangle pulses ("ee"), and percussive "wood-block" thuds.
 
 ## 5. Responsive Design
 

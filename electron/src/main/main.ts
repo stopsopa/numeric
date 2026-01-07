@@ -101,27 +101,6 @@ ipcMain.handle('write-leaderboard', async (_, leaderboard) => {
   await fs.writeFile(LEADERBOARD_PATH, JSON.stringify(leaderboard, null, 2));
 });
 
-ipcMain.handle('get-sounds', async () => {
-  try {
-    // In production, sounds are in the resources folder
-    // In dev, they are in public/sounds
-    const soundsDir = app.isPackaged 
-      ? path.join(process.resourcesPath, 'app', 'dist', 'sounds')
-      : path.join(_dirname, '../../public/sounds');
-    
-    console.log('Fetching sounds from:', soundsDir);
-    
-    const listPath = path.join(soundsDir, 'list.json');
-    const data = await fs.readFile(listPath, 'utf-8');
-    const sounds = JSON.parse(data);
-    console.log('Sounds loaded:', sounds.length);
-    return sounds;
-  } catch (err) {
-    console.error('Failed to read sounds list', err);
-    return [];
-  }
-});
-
 ipcMain.handle('open-external', async (_, url) => {
   shell.openExternal(url);
 });

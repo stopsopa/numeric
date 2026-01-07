@@ -28,6 +28,19 @@ const CONFIG = {
   },
 };
 
+const PROGRAMMATIC_SOUNDS = [
+  { id: 'warm-beep', name: 'Warm Beep', type: 'sine', freq: 440, duration: 0.2 },
+  { id: 'ee-single', name: 'Ee Soft', type: 'ee', baseFreq: 220, formantFreq: 2500, duration: 0.2 },
+  { id: 'ee-low', name: 'Ee Low', type: 'ee', baseFreq: 165, formantFreq: 2000, duration: 0.25 },
+  { id: 'ee-high', name: 'Ee High', type: 'ee', baseFreq: 330, formantFreq: 3000, duration: 0.15 },
+  { id: 'ee-double', name: 'Ee-Ee', type: 'ee-double', baseFreq: 220, formantFreq: 2500, duration: 0.1 },
+  { id: 'wood-block', name: 'Wood Block', type: 'triangle', freq: 600, duration: 0.1 },
+  { id: 'mellow-thud', name: 'Mellow Thud', type: 'sine', freq: 100, duration: 0.3 },
+  { id: 'deep-pulse', name: 'Deep Pulse', type: 'pulse', startFreq: 150, endFreq: 80, duration: 0.2 },
+  { id: 'warm-pulse', name: 'Warm Pulse', type: 'pulse', startFreq: 300, endFreq: 150, duration: 0.2 },
+  { id: 'double-beep', name: 'Double Beep', type: 'double-beep', freq: 350, duration: 0.1 },
+];
+
 let state = {
   currentScreen: 'start',
   currentUser: '',
@@ -51,22 +64,79 @@ window.onerror = (msg, url, line, col, error) => {
 // --- Sound Engine ---
 const soundEngine = {
   audioContext: null,
-  buffers: {},
   async init() {
     this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
   },
-  async loadSound(name, url) {
-    const response = await fetch(url);
-    const arrayBuffer = await response.arrayBuffer();
-    const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-    this.buffers[name] = audioBuffer;
+  play(id) {
+    if (!this.audioContext) this.init();
+    if (this.audioContext.state === 'suspended') this.audioContext.resume();
+
+    const def = PROGRAMMATIC_SOUNDS.find(s => s.id === id) || PROGRAMMATIC_SOUNDS[0];
+    const now = this.audioContext.currentTime;
+    const vol = 0.6;
+
+    if (def.type === 'sine' || def.type === 'triangle') {
+      this._createOsc(def.freq, def.type, now, def.duration, vol);
+    } else if (def.type === 'ee') {
+      this._playEe(now, def.duration, def.baseFreq, def.formantFreq, vol);
+    } else if (def.type === 'ee-double') {
+      this._playEe(now, def.duration, def.baseFreq, def.formantFreq, vol);
+      this._playEe(now + 0.15, def.duration, def.baseFreq, def.formantFreq, vol);
+    } else if (def.type === 'pulse') {
+      this._playPulse(now, def.startFreq, def.endFreq, def.duration, vol);
+    } else if (def.type === 'double-beep') {
+      this._createOsc(def.freq, 'sine', now, def.duration, vol);
+      this._createOsc(def.freq, 'sine', now + 0.15, def.duration, vol);
+    }
   },
-  play(name) {
-    if (!this.buffers[name] || !this.audioContext) return;
-    const source = this.audioContext.createBufferSource();
-    source.buffer = this.buffers[name];
-    source.connect(this.audioContext.destination);
-    source.start(0);
+  _createOsc(freq, type, startTime, duration, volume) {
+    const osc = this.audioContext.createOscillator();
+    const gain = this.audioContext.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, startTime);
+    gain.gain.setValueAtTime(0, startTime);
+    gain.gain.linearRampToValueAtTime(volume, startTime + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+    osc.connect(gain);
+    gain.connect(this.audioContext.destination);
+    osc.start(startTime);
+    osc.stop(startTime + duration);
+  },
+  _playEe(startTime, duration, baseFreq, formantFreq, volume) {
+    const osc = this.audioContext.createOscillator();
+    const gain = this.audioContext.createGain();
+    const filter = this.audioContext.createBiquadFilter();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(baseFreq, startTime);
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(formantFreq, startTime);
+    filter.Q.value = 5;
+    gain.gain.setValueAtTime(0, startTime);
+    gain.gain.linearRampToValueAtTime(volume, startTime + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.audioContext.destination);
+    osc.start(startTime);
+    osc.stop(startTime + duration);
+  },
+  _playPulse(now, startFreq, endFreq, duration, volume) {
+    const osc = this.audioContext.createOscillator();
+    const gain = this.audioContext.createGain();
+    const filter = this.audioContext.createBiquadFilter();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(startFreq, now);
+    osc.frequency.exponentialRampToValueAtTime(endFreq, now + duration / 2);
+    filter.type = 'lowpass';
+    filter.frequency.value = 1000;
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(volume, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.audioContext.destination);
+    osc.start();
+    osc.stop(now + duration);
   }
 };
 
@@ -88,18 +158,17 @@ const Screens = {
     const users = await window.electronAPI.readLeaderboard();
     const lastUser = await window.electronAPI.readCurrentUser();
     const settings = await window.electronAPI.readSettings() || CONFIG.defaults;
-    const sounds = await window.electronAPI.getSounds();
 
     state.allUsers = [...new Set(users.map(u => u.name))];
     state.currentUser = lastUser || '';
     state.settings = settings;
-    state.sounds = sounds;
+    state.sounds = PROGRAMMATIC_SOUNDS;
 
     const userOptions = state.allUsers.map(u => `<option value="${u}" ${u === state.currentUser ? 'selected' : ''}>${u}</option>`).join('');
     
     const fontOptions = CONFIG.fonts.map(f => `<option value="${f}" ${f === state.settings.fontFamily ? 'selected' : ''}>${f}</option>`).join('');
     
-    const soundOptions = state.sounds.map(s => `<option value="${s.file}" ${s.file === state.settings.sound ? 'selected' : ''}>${s.name}</option>`).join('');
+    const soundOptions = state.sounds.map(s => `<option value="${s.id}" ${s.id === state.settings.sound ? 'selected' : ''}>${s.name}</option>`).join('');
 
     render(`
       <div class="screen start-screen">
@@ -173,12 +242,8 @@ const Screens = {
     };
 
     $('preview-sound').onclick = async () => {
-      const soundFile = $('sound-select').value;
-      if (!soundEngine.audioContext) await soundEngine.init();
-      if (!soundEngine.buffers[soundFile]) {
-        await soundEngine.loadSound(soundFile, `sounds/${soundFile}`);
-      }
-      soundEngine.play(soundFile);
+      const soundId = $('sound-select').value;
+      soundEngine.play(soundId);
     };
 
     const updatePreview = () => {

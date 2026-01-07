@@ -8,6 +8,5 @@ electron_1.contextBridge.exposeInMainWorld('electronAPI', {
     writeCurrentUser: (user) => electron_1.ipcRenderer.invoke('write-current-user', user),
     readLeaderboard: () => electron_1.ipcRenderer.invoke('read-leaderboard'),
     writeLeaderboard: (leaderboard) => electron_1.ipcRenderer.invoke('write-leaderboard', leaderboard),
-    getSounds: () => electron_1.ipcRenderer.invoke('get-sounds'),
     openExternal: (url) => electron_1.ipcRenderer.invoke('open-external', url),
 });

@@ -7,6 +7,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   writeCurrentUser: (user: any) => ipcRenderer.invoke('write-current-user', user),
   readLeaderboard: () => ipcRenderer.invoke('read-leaderboard'),
   writeLeaderboard: (leaderboard: any) => ipcRenderer.invoke('write-leaderboard', leaderboard),
-  getSounds: () => ipcRenderer.invoke('get-sounds'),
   openExternal: (url: string) => ipcRenderer.invoke('open-external', url),
 });
