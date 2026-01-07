@@ -181,3 +181,80 @@ Filtered Leaderboard
 Show All Settings
 
 just always show all records - allow me though to filter in advanced way as described above
+
+# Best Score Detection & Leaderboard Highlighting
+
+## 1. Work Screen → Summary Screen Transition
+
+When an exercise is completed and the application transitions from the **Work Screen** to the **Summary Screen**, the system must evaluate whether the result qualifies as a **Best Score**.
+
+---
+
+## 2. Best Score Detection Criteria
+
+A result may only be compared against existing records with the **same exercise configuration**.
+
+Records are considered comparable only if **all** of the following parameters match:
+
+- `groupSize`
+- `groupsPerLine`
+- `totalLines`
+
+Only records that meet all three criteria are eligible for best score evaluation.
+
+---
+
+## 3. Best Score Validation Rules
+
+1. Retrieve all existing records that match the same configuration.
+2. If **no other records exist**, the current result **must not** be considered a best score.
+3. If **one or more comparable records exist**:
+   - Compare the current result against those records using the defined scoring metric.
+   - If the current result is the best among them, it qualifies as a **Best Score**.
+
+> A best score can only be detected when at least one comparable historical record exists.
+
+---
+
+## 4. Summary Screen Presentation (Best Score Case)
+
+If the current result qualifies as a **Best Score**:
+
+- Display a **special summary layout**
+- Trigger a **confetti animation**
+- Highlight the current result as the **Best Score**
+- Display a list of **other records** that match the same configuration:
+  - Sorted by score (best → worst)
+  - Shown below the highlighted best score
+
+If the result does **not** qualify as a best score, display the standard summary screen without confetti or special highlighting.
+
+---
+
+## 5. Leaderboard: Last Result Highlighting
+
+The application must persist the **last completed result** independently of best score detection.
+
+Rules:
+
+- The **last result** must always be highlighted on the **Leaderboard**
+- Highlighting applies regardless of navigation path to the leaderboard
+- The last result does **not** need to be a best score
+- Only one last-result highlight may exist at any time
+
+---
+
+## 6. Application Launch Behavior
+
+- On fresh application launch, the last-result memory may be empty
+- If no last result exists:
+  - No leaderboard rows should be highlighted
+  - No default or fallback highlighting should be applied
+
+---
+
+## 7. Separation of Concerns
+
+- **Best Score detection** occurs only during transition to the Summary Screen
+- **Last Result highlighting** is persistent state used only by the Leaderboard UI
+- These two mechanisms must operate independently
