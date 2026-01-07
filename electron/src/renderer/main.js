@@ -47,7 +47,8 @@ let state = {
   allUsers: [],
   settings: { ...CONFIG.defaults },
   sounds: [],
-  session: null
+  session: null,
+  lastResultDate: null
 };
 
 // --- Utils ---
@@ -164,7 +165,7 @@ const Screens = {
     state.settings = settings;
     state.sounds = PROGRAMMATIC_SOUNDS;
 
-    const userOptions = state.allUsers.map(u => `<option value="${u}" ${u === state.currentUser ? 'selected' : ''}>${u}</option>`).join('');
+    const userDatalist = state.allUsers.map(u => `<option value="${u}">`).join('');
     
     const fontOptions = CONFIG.fonts.map(f => `<option value="${f}" ${f === state.settings.fontFamily ? 'selected' : ''}>${f}</option>`).join('');
     
@@ -172,16 +173,16 @@ const Screens = {
 
     render(`
       <div class="screen start-screen">
+        <button id="quit-btn" class="top-left-btn">×</button>
         <h1>Numerical Keyboard Trainer</h1>
         
         <div class="form-group user-group">
           <label>User:</label>
           <div class="user-inputs">
-            <select id="user-select">
-              <option value="">-- New User --</option>
-              ${userOptions}
-            </select>
-            <input type="text" id="new-user-input" placeholder="Enter name" style="display: ${state.currentUser ? 'none' : 'block'}">
+            <input type="text" id="user-input" list="user-list" placeholder="Select or type name" value="${state.currentUser}">
+            <datalist id="user-list">
+              ${userDatalist}
+            </datalist>
           </div>
         </div>
 
@@ -235,12 +236,9 @@ const Screens = {
 
     // --- Listeners ---
     console.log('Start screen listeners attaching...');
-    $('user-select').onchange = (e) => {
-      const val = e.target.value;
-      $('new-user-input').style.display = val ? 'none' : 'block';
-      state.currentUser = val;
-    };
-
+    
+    $('quit-btn').onclick = () => window.electronAPI.quitApp();
+    
     $('preview-sound').onclick = async () => {
       const soundId = $('sound-select').value;
       soundEngine.play(soundId);
@@ -257,7 +255,7 @@ const Screens = {
     updatePreview();
 
     $('start-btn').onclick = () => {
-      const name = $('user-select').value || $('new-user-input').value.trim();
+      const name = $('user-input').value.trim();
       if (!name) {
         Screens.showModal('Name Required', 'Please enter or select a name to start.', () => {});
         return;
@@ -316,6 +314,7 @@ const Screens = {
 
     const renderLines = () => {
       let html = '<div class="screen work-screen">';
+      html += `<button id="quit-btn" class="top-left-btn">×</button>`;
       html += `<button id="abandon-btn" class="top-right-btn">×</button>`;
       html += '<div class="scroll-container">';
       
@@ -416,6 +415,8 @@ const Screens = {
 
     window.addEventListener('keydown', handleKey);
 
+    $('quit-btn').onclick = () => window.electronAPI.quitApp();
+
     $('abandon-btn').onclick = () => {
       Screens.showModal('Abandon session?', 'Are you sure you want to return to the start screen?', () => {
         window.removeEventListener('keydown', handleKey);
@@ -464,13 +465,28 @@ const Screens = {
     const endTime = Date.now();
     const duration = (endTime - state.session.startTime) / 1000;
     const accuracy = ((state.session.totalDigts - state.session.errors) / state.session.totalDigts * 100).toFixed(2);
-    
-    // Check for records
+    const currentDate = new Date().toISOString();
+    state.lastResultDate = currentDate;
+
     const leaderboard = await window.electronAPI.readLeaderboard();
-    const userRecords = leaderboard.filter(r => r.name === state.currentUser);
-    let isRecord = false;
-    if (userRecords.length === 0 || parseFloat(accuracy) > Math.max(...userRecords.map(r => r.accuracy))) {
-      isRecord = true;
+    
+    // Filter records with SAME configuration
+    const comparableRecords = leaderboard.filter(r => 
+      r.settings.groupSize === state.settings.groupSize &&
+      r.settings.groupsPerLine === state.settings.groupsPerLine &&
+      r.settings.totalLines === state.settings.totalLines
+    );
+
+    let isBestScore = false;
+    if (comparableRecords.length > 0) {
+      // Find the best accuracy and then the best time among those with the best accuracy
+      const bestAccuracy = Math.max(...comparableRecords.map(r => r.accuracy));
+      const bestAccuracyRecords = comparableRecords.filter(r => r.accuracy === bestAccuracy);
+      const bestTime = Math.min(...bestAccuracyRecords.map(r => r.time));
+
+      if (parseFloat(accuracy) > bestAccuracy || (parseFloat(accuracy) === bestAccuracy && duration < bestTime)) {
+        isBestScore = true;
+      }
     }
 
     const sessionRecord = {
@@ -479,7 +495,7 @@ const Screens = {
       time: duration,
       errors: state.session.errors,
       totalKeys: state.session.totalKeys,
-      date: new Date().toISOString(),
+      date: currentDate,
       settings: state.settings
     };
 
@@ -489,9 +505,77 @@ const Screens = {
     const minutes = Math.floor(duration / 60);
     const seconds = (duration % 60).toFixed(2);
 
-    render(`
-      <div class="screen summary-screen">
-        <button id="restart-top-btn" class="top-right-btn">×</button>
+    let contentHtml = '';
+    
+    if (isBestScore) {
+      const sortedComparable = [...comparableRecords, sessionRecord].sort((a, b) => {
+        if (b.accuracy !== a.accuracy) return b.accuracy - a.accuracy;
+        return a.time - b.time;
+      });
+
+      contentHtml = `
+        <div class="best-score-summary">
+          <div class="confetti-anchor"></div>
+          <div class="best-score-header">
+            <span class="crown">👑</span>
+            <h1>NEW BEST SCORE!</h1>
+            <span class="crown">👑</span>
+          </div>
+
+          <div class="metrics-grid highlight">
+            <div class="metric highlight">
+              <div class="label">Accuracy</div>
+              <div class="value">${accuracy}%</div>
+            </div>
+            <div class="metric highlight">
+              <div class="label">Errors</div>
+              <div class="value">${state.session.errors} / ${state.session.totalKeys}</div>
+            </div>
+            <div class="metric highlight">
+              <div class="label">Time Taken</div>
+              <div class="value">${minutes}m ${seconds}s</div>
+            </div>
+          </div>
+
+          <div class="comparable-section">
+            <h3>Comparable Configuration Records</h3>
+            <div class="table-container small">
+              <table class="leaderboard-table mini">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Accuracy</th>
+                    <th>Time</th>
+                    <th>Errors</th>
+                    <th>GS</th>
+                    <th>G/L</th>
+                    <th>Lines</th>
+                    <th>Mode</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${sortedComparable.map(r => `
+                    <tr class="${r.date === currentDate ? 'current-best' : ''}">
+                      <td>${r.name}</td>
+                      <td>${r.accuracy}%</td>
+                      <td>${r.time.toFixed(2)}s</td>
+                      <td>${r.errors}</td>
+                      <td>${r.settings.groupSize}</td>
+                      <td>${r.settings.groupsPerLine}</td>
+                      <td>${r.settings.totalLines}</td>
+                      <td>${r.settings.errorMode}</td>
+                      <td>${Screens._formatDate(r.date)}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    } else {
+      contentHtml = `
         <h1>Session Summary</h1>
         
         <div class="metrics-grid">
@@ -508,8 +592,14 @@ const Screens = {
             <div class="value">${minutes}m ${seconds}s</div>
           </div>
         </div>
+      `;
+    }
 
-        ${isRecord ? '<div class="record-badge">NEW RECORD! 🎉</div>' : ''}
+    render(`
+      <div class="screen summary-screen">
+        <button id="quit-btn" class="top-left-btn">×</button>
+        <button id="restart-top-btn" class="top-right-btn">×</button>
+        ${contentHtml}
 
         <div class="actions">
           <button id="restart-btn" class="primary">Restart</button>
@@ -518,24 +608,22 @@ const Screens = {
       </div>
     `);
 
-    if (isRecord && typeof confetti === 'function') {
+    if (isBestScore && typeof confetti === 'function') {
       confetti({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 }
+        particleCount: 200,
+        spread: 90,
+        origin: { y: 0.5 },
+        colors: ['#ffd700', '#ffffff', '#ff4d4d']
       });
     }
+
+    $('quit-btn').onclick = () => window.electronAPI.quitApp();
 
     $('restart-top-btn').onclick = () => Screens.start();
     $('restart-btn').onclick = () => Screens.start();
     const lbBtn = $('leaderboard-btn');
     if (lbBtn) {
-      lbBtn.onclick = () => {
-        console.log('Leaderboard button clicked from Summary');
-        Screens.leaderboard();
-      };
-    } else {
-      console.warn('Leaderboard button NOT found in Summary screen!');
+      lbBtn.onclick = () => Screens.leaderboard();
     }
   },
 
@@ -590,6 +678,7 @@ const Screens = {
 
       let html = `
         <div class="screen leaderboard-screen">
+          <button id="quit-btn" class="top-left-btn">×</button>
           <button id="back-top-btn" class="top-right-btn">×</button>
           <div class="header-actions">
             <h1>Leaderboard</h1>
@@ -620,19 +709,23 @@ const Screens = {
                 </tr>
               </thead>
               <tbody>
-                ${sortedData.map(row => `
-                  <tr>
-                    <td>${row.name}</td>
-                    <td>${row.accuracy}%</td>
-                    <td>${row.time.toFixed(2)}s</td>
-                    <td>${row.errors}</td>
-                    <td>${row.settings.groupSize}</td>
-                    <td>${row.settings.groupsPerLine}</td>
-                    <td>${row.settings.totalLines}</td>
-                    <td>${row.settings.errorMode}</td>
-                    <td>${Screens._formatDate(row.date)}</td>
-                  </tr>
-                `).join('')}
+                ${sortedData.map(row => {
+                  const isLastResult = state.lastResultDate && row.date === state.lastResultDate;
+                  const highlightClass = isLastResult ? 'last-result-highlight' : '';
+                  return `
+                    <tr class="${highlightClass}">
+                      <td>${row.name}</td>
+                      <td>${row.accuracy}%</td>
+                      <td>${row.time.toFixed(2)}s</td>
+                      <td>${row.errors}</td>
+                      <td>${row.settings.groupSize}</td>
+                      <td>${row.settings.groupsPerLine}</td>
+                      <td>${row.settings.totalLines}</td>
+                      <td>${row.settings.errorMode}</td>
+                      <td>${Screens._formatDate(row.date)}</td>
+                    </tr>
+                  `;
+                }).join('')}
               </tbody>
             </table>
           </div>
@@ -641,6 +734,7 @@ const Screens = {
       render(html);
 
       // Listeners
+      $('quit-btn').onclick = () => window.electronAPI.quitApp();
       $('back-top-btn').onclick = () => Screens.start();
       $('reset-sort').onclick = () => {
         sortLevels = [];

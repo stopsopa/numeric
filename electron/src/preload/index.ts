@@ -8,4 +8,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   readLeaderboard: () => ipcRenderer.invoke('read-leaderboard'),
   writeLeaderboard: (leaderboard: any) => ipcRenderer.invoke('write-leaderboard', leaderboard),
   openExternal: (url: string) => ipcRenderer.invoke('open-external', url),
+  quitApp: () => ipcRenderer.invoke('quit-app'),
 });

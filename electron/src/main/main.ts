@@ -104,3 +104,6 @@ ipcMain.handle('write-leaderboard', async (_, leaderboard) => {
 ipcMain.handle('open-external', async (_, url) => {
   shell.openExternal(url);
 });
+ipcMain.handle('quit-app', () => {
+  app.quit();
+});
