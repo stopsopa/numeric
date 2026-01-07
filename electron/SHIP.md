@@ -9,7 +9,7 @@ Prepare the `numeric` Electron application for simple installation by end-users,
 1.  **Release Drafter**: Automatically creates a "Draft Release" with categorized changelogs (Features, Fixes, etc.) based on PRs.
 2.  **UI Driven Release**: Maintainer reviews the draft in GitHub Releases UI and clicks "Publish".
 3.  **Automation**: "Publish" action triggers the build workflow.
-4.  **Architecture**: Universal binaries (x64/arm64) for macOS.
+4.  **Architecture**: Separate binaries for Intel (x64) and Apple Silicon (arm64) for macOS.
 
 ## 1. Prepare `package.json`
 
