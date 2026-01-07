@@ -35,7 +35,7 @@ async function createWindow() {
         mainWindow.webContents.openDevTools();
     }
     else {
-        mainWindow.loadFile(path.join(_dirname, '../renderer/index.html'));
+        mainWindow.loadFile(path.join(_dirname, '../../dist/index.html'));
     }
     mainWindow.on('closed', () => {
         mainWindow = null;
