@@ -2,7 +2,7 @@
 
 ## Goal
 
-Prepare the `MusicFilter` Electron application for simple installation by end-users, leveraging GitHub Actions for automated releases.
+Prepare the `numeric` Electron application for simple installation by end-users, leveraging GitHub Actions for automated releases.
 
 ## Strategy
 
@@ -27,7 +27,7 @@ Prepare the `MusicFilter` Electron application for simple installation by end-us
 3.  **Publish**: Click **Publish release**.
     - This creates the tag (e.g., `v1.0.0`).
     - Triggers the build workflow.
-    - Uploads `MusicFilter-*-universal.dmg` to the release.
+    - Uploads `numeric-*-universal.dmg` to the release.
 
 ## 3. Installation Instructions for Users
 
@@ -36,11 +36,11 @@ Prepare the `MusicFilter` Electron application for simple installation by end-us
 ### Installation (macOS)
 
 1.  Go to the [Releases](../../releases) page.
-2.  Download the `.dmg` file (e.g., `MusicFilter-1.0.0-universal.dmg`).
+2.  Download the `.dmg` file (e.g., `numeric-1.0.0-universal.dmg`).
 3.  Double-click to open.
-4.  Drag `MusicFilter` to the `Applications` folder.
+4.  Drag `numeric` to the `Applications` folder.
 5.  **First Run**:
-    - Since this app is not signed by Apple, you might see a warning: _"MusicFilter" can't be opened because it is from an unidentified developer._
+    - Since this app is not signed by Apple, you might see a warning: _"numeric" can't be opened because it is from an unidentified developer._
     - To fix this:
       1.  **Right-click** (or Control-click) the app in your Applications folder.
       2.  Select **Open**.
