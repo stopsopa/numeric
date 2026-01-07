@@ -109,9 +109,13 @@ ipcMain.handle('get-sounds', async () => {
       ? path.join(process.resourcesPath, 'app', 'dist', 'sounds')
       : path.join(_dirname, '../../public/sounds');
     
+    console.log('Fetching sounds from:', soundsDir);
+    
     const listPath = path.join(soundsDir, 'list.json');
     const data = await fs.readFile(listPath, 'utf-8');
-    return JSON.parse(data);
+    const sounds = JSON.parse(data);
+    console.log('Sounds loaded:', sounds.length);
+    return sounds;
   } catch (err) {
     console.error('Failed to read sounds list', err);
     return [];

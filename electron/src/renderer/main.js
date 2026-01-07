@@ -176,7 +176,7 @@ const Screens = {
       const soundFile = $('sound-select').value;
       if (!soundEngine.audioContext) await soundEngine.init();
       if (!soundEngine.buffers[soundFile]) {
-        await soundEngine.loadSound(soundFile, `/sounds/${soundFile}`);
+        await soundEngine.loadSound(soundFile, `sounds/${soundFile}`);
       }
       soundEngine.play(soundFile);
     };
@@ -500,6 +500,9 @@ const Screens = {
             } else if (level.column === 'Mode') {
               valA = a.settings.errorMode;
               valB = b.settings.errorMode;
+            } else if (level.column === 'Date') {
+              valA = new Date(a.date).getTime();
+              valB = new Date(b.date).getTime();
             } else {
               valA = a[level.column.toLowerCase()];
               valB = b[level.column.toLowerCase()];
@@ -547,8 +550,7 @@ const Screens = {
                     const levelClass = sortIdx !== -1 ? `sort-level-${sortIdx + 1}` : '';
                     const indicator = sortIdx !== -1 ? (sortLevels[sortIdx].direction === 'asc' ? '▲' : '▼') : '';
                     const tooltip = tooltips[h] ? `title="${tooltips[h]}"` : '';
-                    const sortable = h !== 'Date' ? 'class="sortable"' : '';
-                    return `<th ${sortable} data-col="${h}" class="${levelClass}" ${tooltip}>${h} ${indicator}</th>`;
+                    return `<th class="sortable ${levelClass}" data-col="${h}" ${tooltip}>${h} ${indicator}</th>`;
                   }).join('')}
                 </tr>
               </thead>

@@ -82,7 +82,7 @@ An Electron-based application to train numerical keyboard entry speed and accura
   - **Return Button:** Back to Start Screen. - keep button somewhere above the leaderboard table. In fact don't put anything under leaderboard table
 - for colums represented by abbreviations like "GS" or "G/L" add tooltip on hover to explain what it means
 
-- add also column date to leaderboard table - with the seconds - that column shouldn't be sortable. just present it and that's it. Format Y-MM-DD HH:mm:ss
+- add also column date to leaderboard table - with the seconds. This column is sortable and supports multi-level sorting. Format Y-MM-DD HH:mm:ss
 
 ## 3. Configuration & Data Storage
 
@@ -169,10 +169,11 @@ Ideally i would like it to be the same component but with extra step with modal 
 
 Create DEV.md describing in most compact way what command one should use to create electron build for this app, in order to test it locally
 
-# Releasing:
+# Releasing & Local Testing
 
-WARNING: this has to be done
-I've prepared .github/\* setup also setup for electron - try to follow and adapt to it
+- **Local Development:** See `DEV.md` for instructions on how to run and build the app locally.
+- **Icon:** A custom app icon is located at `electron/build/icon.png`.
+- **CI/CD:** GitHub Actions workflow is configured in `.github/workflows/release.yml` for automated releases.
 
 # Tweak
 
