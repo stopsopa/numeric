@@ -42,7 +42,7 @@ jobs:
   test:
     name: 🧪 Run Tests
     runs-on: ubuntu-latest
-    # Removed needs: debug to run in parallel
+    needs: debug
     # CROSS-JOB STATE (The "Anouncer"):
     # To pass data to other jobs, you MUST declare them here.
     # It maps a step's internal output to a job-level output.
@@ -78,7 +78,7 @@ jobs:
   # Pauses on 'test' environment.
   test-build:
     name: 🍴 Test Build - Fork test
-    # Removed needs: test to run in parallel
+    needs: test
     runs-on: ubuntu-latest
     environment: test # <--- Pauses here!
     steps:
@@ -96,7 +96,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, windows-latest]
-    # Removed needs: test to run in parallel
+    needs: test
     runs-on: ${{ matrix.os }}
     environment: development # <--- Pauses here!
     defaults:
@@ -156,8 +156,8 @@ jobs:
   # Pauses on 'production' environment.
   bump:
     name: 🚀 Bump Version (Prod)
-    # Wait for all parallel jobs to ensure everything is stable before releasing
-    needs: [test, test-build, qa-build]
+    # Wait for QA builds to ensure they pass before releasing
+    needs: qa-build
     runs-on: ubuntu-latest
     environment: production # <--- Pauses here!
     defaults:
