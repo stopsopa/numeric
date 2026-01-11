@@ -9,13 +9,17 @@ An Electron-based application designed to train and improve numerical keyboard e
 I just needed this to help my children to learn typing on numeric keyboard.
 I've tried to find something like this but after short effort I've realized that what I need is really finite complexity application. So I just vibecoded it in one evening and case closed.
 
-## Installation & Running
+## Installation from binary
+
+Just to to Github releases, download binary and install like any other app
+
+## Running in DEV mode
 
 ### Prerequisites
 
 - Node.js and npm installed.
 
-### Development Mode
+### Run
 
 To run the application locally for development:
 
