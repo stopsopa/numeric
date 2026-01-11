@@ -4,6 +4,10 @@
 
 An Electron-based application designed to train and improve numerical keyboard entry speed and accuracy. It provides real-time feedback, multiple session configurations (group sizes, fonts, error modes), and a comprehensive leaderboard to track progress.
 
+## Known issues:
+
+- [MusicFilter.app is damaged and can't be opened. You should move it to the Bin](https://github.com/stopsopa/musicfilter/issues/1)
+
 ### Where the idea came from?
 
 I just needed this to help my children to learn typing on numeric keyboard.
