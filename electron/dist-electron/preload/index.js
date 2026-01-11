@@ -9,4 +9,5 @@ electron_1.contextBridge.exposeInMainWorld('electronAPI', {
     readLeaderboard: () => electron_1.ipcRenderer.invoke('read-leaderboard'),
     writeLeaderboard: (leaderboard) => electron_1.ipcRenderer.invoke('write-leaderboard', leaderboard),
     openExternal: (url) => electron_1.ipcRenderer.invoke('open-external', url),
+    quitApp: () => electron_1.ipcRenderer.invoke('quit-app'),
 });
