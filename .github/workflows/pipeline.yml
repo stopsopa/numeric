@@ -42,7 +42,7 @@ jobs:
   test:
     name: 🧪 Run Tests
     runs-on: ubuntu-latest
-    needs: debug
+    # Removed needs: debug to run in parallel
     # CROSS-JOB STATE (The "Anouncer"):
     # To pass data to other jobs, you MUST declare them here.
     # It maps a step's internal output to a job-level output.
@@ -78,14 +78,9 @@ jobs:
   # Pauses on 'test' environment.
   test-build:
     name: 🍴 Test Build - Fork test
-    needs: test
+    # Removed needs: test to run in parallel
     runs-on: ubuntu-latest
     environment: test # <--- Pauses here!
-    # CROSS-JOB STATE (The "Catcher"):
-    # Since this is a fresh machine, we must 'catch' the output from the 'test' job
-    # and map it back into this job's environment.
-    env:
-      STEP_TEST_COMPLETE: ${{ needs.test.outputs.test_complete }}
     steps:
       - name: 🔍 State Check
         run: |
@@ -96,28 +91,14 @@ jobs:
 
   # STEP 2b: Dev/QA Build (Main Fork)
   # Pauses on 'development' environment.
-  #
-  # 🚨 CONFIGURATION REQUIRED:
-  # You MUST configure TWO environments in GitHub Repo Settings > Environments:
-  #
-  # 1. 'development' (For QA Build)
-  #    - Go to Settings > Environments > New environment > Name: development
-  #    - Configure environment > Check "Required reviewers" > Add yourself (stopsopa)
-  #    - Save protection rules
-  #
-  # 2. 'production' (For Official Release)
-  #    - Go to Settings > Environments > New environment > Name: production
-  #    - Configure environment > Check "Required reviewers" > Add yourself (stopsopa)
-  #    - Save protection rules
   qa-build:
-    name: 🚧 QA Build (Dev)
-    needs: test
-    runs-on: macos-latest # Run on Mac to build DMG
+    name: 🚧 QA Build (${{ matrix.os }})
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
+    # Removed needs: test to run in parallel
+    runs-on: ${{ matrix.os }}
     environment: development # <--- Pauses here!
-    # CROSS-JOB STATE (The "Catcher"):
-    # Mapping the test result here so the Audit dump below can see it.
-    env:
-      STEP_TEST_COMPLETE: ${{ needs.test.outputs.test_complete }}
     defaults:
       run:
         working-directory: ./electron
@@ -128,16 +109,19 @@ jobs:
           ref: ${{ env.RELEASE_TAG }}
 
       - name: 🔍 Audit
+        shell: bash
         run: |
           echo "ENV Path: $GITHUB_ENV"
           env | grep -E "STEP_|GITHUB_|RELEASE_TAG" | sort
 
       - name: 🔍 State Check (2)
+        shell: bash
         run: |
           echo "STEP_QA_CHECKOUT=true" >> $GITHUB_ENV
           env | grep "STEP_" | sort
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: "npm"
@@ -148,23 +132,32 @@ jobs:
           npm ci
           npm run build
 
-      - name: 🏗️ Build DMG for QA
+      - name: 🏗️ Build App for QA
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --mac --publish never
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" == "macOS" ]; then
+            npx electron-builder --mac --publish never
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+            npx electron-builder --win --publish never
+          fi
 
       - name: 📤 Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: qa-release-dmg
-          path: electron/release/*.dmg
+          name: qa-release-${{ matrix.os }}
+          path: |
+            electron/release/*.dmg
+            electron/release/*.exe
           retention-days: 1
 
   # STEP 3: The "Gatekeeper" for Production
   # Pauses on 'production' environment.
   bump:
     name: 🚀 Bump Version (Prod)
-    needs: qa-build # <--- Depends on QA passing!
+    # Wait for all parallel jobs to ensure everything is stable before releasing
+    needs: [test, test-build, qa-build]
     runs-on: ubuntu-latest
     environment: production # <--- Pauses here!
     defaults:
@@ -176,14 +169,13 @@ jobs:
       new_tag: ${{ steps.release.outputs.new_tag }}
       released: ${{ steps.release.outputs.released }}
     steps:
-
       - uses: actions/checkout@v4
         with:
           # Use the resolved RELEASE_TAG for checkout
           ref: ${{ env.RELEASE_TAG }}
           fetch-depth: 0
           persist-credentials: false
-          
+
       - name: 🔍 Audit
         run: env | grep -E "STEP_|GITHUB_|RELEASE_TAG" | sort
 
