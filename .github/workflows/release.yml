@@ -19,16 +19,21 @@ permissions:
   contents: write
 
 jobs:
-  build-mac:
-    name: 🏗️ Build (macOS)
-    runs-on: macos-latest
+  build:
+    name: 🏗️ Build (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: 🔍 Audit
+        shell: bash
         run: |
           echo "### Release Context ###"
-          echo "Event {{ github.event_name }}: >${{ github.event_name }}<"
-          echo "Tag {{ inputs.tag_name }}:   >${{ inputs.tag_name }}<"
-          echo "Ref {{ github.ref_name }}:   >${{ github.ref_name }}<"
+          echo "Event ${{ github.event_name }}: >${{ github.event_name }}<"
+          echo "Tag ${{ inputs.tag_name }}:   >${{ inputs.tag_name }}<"
+          echo "Ref ${{ github.ref_name }}:   >${{ github.ref_name }}<"
           echo "ENV Path: $GITHUB_ENV"
           env | grep -E "STEP_|GITHUB_" | sort || echo "No markers yet"
 
@@ -45,6 +50,7 @@ jobs:
 
       - name: 📦 Install, Build & Sync
         working-directory: ./electron
+        shell: bash
         run: |
           npm ci
 
@@ -60,72 +66,28 @@ jobs:
         working-directory: ./electron
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        # MAGIC STEP 2: Publish to GitHub
-        # - electron-builder reads the version from package.json (set in step above)
-        # - It packages the app (creating .dmg because of "mac": { "target": "dmg" } in package.json)
-        # - It uploads the .dmg to the EXISTING GitHub Release that matches this version.
-        # Note: The Release MUST already exist (created by semantic-release in the previous workflow)
-        # for this step to succeed.
-        run: npx electron-builder --mac --publish always
-        # warning: in order to avoid issue in this step:
-        # GitHub release not created  reason=existing type not compatible with publishing type tag=v1.4.1 version=1.4.1 existingType=release publishingType=draft
-        # it is needed to add to package.json "publish": { "provider": "github", "releaseType": "release" }
+        shell: bash
+        run: |
+          if [ "${{ matrix.os }}" = "macos-latest" ]; then
+            npx electron-builder --mac --publish always
+          else
+            npx electron-builder --win --publish always
+          fi
 
       - name: 📤 Upload Additional Assets
+        if: matrix.os == 'macos-latest'
         working-directory: ./electron
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG_NAME=${{ inputs.tag_name || github.ref_name }}
           gh release upload $TAG_NAME package.json --clobber
-          # gh release upload $TAG_NAME .github/workflows/* --clobber
-
-      # Failsafe: Upload artifact to Actions Run as well
-      # This ensures you can access the binary even if the Github Release upload fails
-      # WARNING: this will upload to action page not to release page - so we don't need that here
-      # - name: Upload Release Artifact (Backup)
-      #   if: always()
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: release-dmg
-      #     path: electron/release/*.dmg
-      #     retention-days: 5
-
-  build-win:
-    name: 🏗️ Build (Windows)
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.tag_name || github.ref }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: "npm"
-          cache-dependency-path: electron/package-lock.json
-
-      - name: 📦 Install, Build & Sync
-        working-directory: ./electron
-        run: |
-          npm ci
-          $REF_NAME = if ("${{ inputs.tag_name }}") { "${{ inputs.tag_name }}" } else { "${{ github.ref_name }}" }
-          $VERSION = $REF_NAME -replace '^v', ''
-          Write-Host "Setting package.json version to $VERSION"
-          npm version $VERSION --no-git-tag-version
-          npm run build
-
-      - name: 🏗️ Build and Publish Electron App
-        working-directory: ./electron
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --win --publish always
 
   summary:
-    name: 📢 Release Summary
+    name: � Release Summary
+    needs: build
     runs-on: ubuntu-latest
-    needs: [build-mac, build-win]
     if: always()
     steps:
       - name: 📢 Generate Summary
@@ -138,14 +100,8 @@ jobs:
           echo "You can view the release and download the assets here:" >> $GITHUB_STEP_SUMMARY
           echo "👉 [**$TAG_NAME**]($RELEASE_URL)" >> $GITHUB_STEP_SUMMARY
 
-          if [ "${{ needs.build-mac.result }}" == "success" ]; then
-            echo "- ✅ macOS build completed" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ needs.build.result }}" == "success" ]; then
+            echo "- ✅ All builds completed successfully" >> $GITHUB_STEP_SUMMARY
           else
-            echo "- ❌ macOS build failed" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          if [ "${{ needs.build-win.result }}" == "success" ]; then
-            echo "- ✅ Windows build completed" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- ❌ Windows build failed" >> $GITHUB_STEP_SUMMARY
+            echo "- ❌ Some builds failed" >> $GITHUB_STEP_SUMMARY
           fi
