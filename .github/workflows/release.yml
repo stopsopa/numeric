@@ -85,7 +85,7 @@ jobs:
           gh release upload $TAG_NAME package.json --clobber
 
   summary:
-    name: � Release Summary
+    name: 📢 Release Summary
     needs: build
     runs-on: ubuntu-latest
     if: always()
