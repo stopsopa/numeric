@@ -91,13 +91,61 @@ jobs:
       #     path: electron/release/*.dmg
       #     retention-days: 5
 
-      - name: 📢 Release Summary
-        if: success()
+  build-win:
+    name: 🏗️ Build (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag_name || github.ref }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+          cache-dependency-path: electron/package-lock.json
+
+      - name: 📦 Install, Build & Sync
+        working-directory: ./electron
+        run: |
+          npm ci
+          $REF_NAME = if ("${{ inputs.tag_name }}") { "${{ inputs.tag_name }}" } else { "${{ github.ref_name }}" }
+          $VERSION = $REF_NAME -replace '^v', ''
+          Write-Host "Setting package.json version to $VERSION"
+          npm version $VERSION --no-git-tag-version
+          npm run build
+
+      - name: 🏗️ Build and Publish Electron App
+        working-directory: ./electron
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --win --publish always
+
+  summary:
+    name: 📢 Release Summary
+    runs-on: ubuntu-latest
+    needs: [build-mac, build-win]
+    if: always()
+    steps:
+      - name: 📢 Generate Summary
         run: |
           TAG_NAME=${{ inputs.tag_name || github.ref_name }}
           REPO_URL="https://github.com/${{ github.repository }}"
           RELEASE_URL="$REPO_URL/releases/tag/$TAG_NAME"
 
           echo "### 🚀 Release Published Successfully!" >> $GITHUB_STEP_SUMMARY
-          echo "You can view the release and download the DMG here:" >> $GITHUB_STEP_SUMMARY
+          echo "You can view the release and download the assets here:" >> $GITHUB_STEP_SUMMARY
           echo "👉 [**$TAG_NAME**]($RELEASE_URL)" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.build-mac.result }}" == "success" ]; then
+            echo "- ✅ macOS build completed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ macOS build failed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.build-win.result }}" == "success" ]; then
+            echo "- ✅ Windows build completed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ Windows build failed" >> $GITHUB_STEP_SUMMARY
+          fi

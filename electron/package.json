@@ -42,6 +42,18 @@
     "publish": {
       "provider": "github",
       "releaseType": "release"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "ia32",
+            "x64",
+            "arm64"
+          ]
+        }
+      ]
     }
   },
   "dependencies": {
