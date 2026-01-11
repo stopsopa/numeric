@@ -11,7 +11,7 @@ I've tried to find something like this but after short effort I've realized that
 
 ## Installation from binary
 
-Just to to Github releases, download binary and install like any other app
+Just go to [Github releases](../../releases), download the binary, and install it like any other app.
 
 ## Running in DEV mode
 
