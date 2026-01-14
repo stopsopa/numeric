@@ -1,5 +1,7 @@
 # Numerical Keyboard Trainer
 
+![Preview](https://github.com/user-attachments/assets/bf6a2cbd-3f96-4af1-9feb-38ffa01e451f)
+
 ## What is this?
 
 An Electron-based application designed to train and improve numerical keyboard entry speed and accuracy. It provides real-time feedback, multiple session configurations (group sizes, fonts, error modes), and a comprehensive leaderboard to track progress.
