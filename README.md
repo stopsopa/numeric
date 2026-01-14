@@ -1,6 +1,6 @@
 # Numerical Keyboard Trainer
 
-![Preview](https://github.com/user-attachments/assets/bf6a2cbd-3f96-4af1-9feb-38ffa01e451f)
+![Image](https://github.com/user-attachments/assets/e5a6807f-85b1-452f-8cf8-6f14ac887c7d)
 
 ## What is this?
 
